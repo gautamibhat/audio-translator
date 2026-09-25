@@ -1,0 +1,3 @@
+1. Audio recordings - https://www.kaggle.com/datasets/paultimothymooney/medical-speech-transcription-and-intent
+2. Preprocessing steps:
+    1. make the signal easier for the speech-recognition model to hear while preserving what the patient actually said

@@ -1,0 +1,22 @@
+.ipynb_checkpoints/
+.virtual_documents/
+cache/
+.cache/
+.venv/
+__pycache__/
+
+# Mac system files
+.DS_Store
+
+# Do not commit original datasets 
+data/audio_data/
+sample_code/
+notebooks/
+
+
+# Files to exclude from the repository
+commands.txt
+.env
+.env
+.env.*
+!.env.example

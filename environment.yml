@@ -1,0 +1,8 @@
+name: audio_processing
+channels:
+  - defaults
+dependencies:
+  - pydub
+  - jupyterlab
+  - pandas
+prefix: /Users/gomo/anaconda3/envs/audio_processing
