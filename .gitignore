@@ -20,3 +20,12 @@ commands.txt
 .env
 .env.*
 !.env.example
+
+# Airflow runtime files
+logs/*
+!logs/.gitkeep
+config/airflow.cfg
+
+# Python test/cache files
+.pytest_cache/
+*.py[cod]
