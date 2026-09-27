@@ -68,6 +68,8 @@ x-airflow-common:
     AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
     AIRFLOW__PROVIDERS_ODBC__ALLOW_DRIVER_IN_EXTRA: "true"
     AIRFLOW__CORE__TEST_CONNECTION: "Enabled"
+    AIRFLOW_CONN_SQLSERVER_PIPELINE: >-
+      {"conn_type":"odbc","host":"sqlserver","schema":"audio_pipeline","login":"${AUDIO_PIPELINE_DB_USER}","password":"${AUDIO_PIPELINE_DB_PASSWORD}","port":1433,"extra":{"Driver":"ODBC Driver 18 for SQL Server","TrustServerCertificate":"Yes"}}
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
     # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
@@ -79,12 +81,14 @@ x-airflow-common:
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     PYTHONPATH: /opt/airflow/src
+    AUDIO_LOCAL_ROOT: ${AUDIO_LOCAL_ROOT:-/opt/airflow/data/audio_data/train}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow/src
+    - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data:ro
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
