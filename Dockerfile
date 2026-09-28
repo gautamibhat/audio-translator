@@ -7,6 +7,7 @@ RUN apt-get update \
         msodbcsql18 \
         unixodbc \
         unixodbc-dev \
+        ffmpeg \
         g++ \
     && rm -rf /var/lib/apt/lists/*
 

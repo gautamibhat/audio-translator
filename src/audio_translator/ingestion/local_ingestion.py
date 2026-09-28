@@ -9,6 +9,9 @@ from audio_translator.ingestion.local_source import (
     discover_local_audio_files,
     inspect_local_audio_file,
 )
+from audio_translator.ingestion.validation import (
+    validate_local_audio_file,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -18,8 +21,10 @@ def ingest_local_audio_directory(
     root_directory: str | Path | None = None,
 ) -> list[int]:
     """
-    Discover and register all supported audio files
-    in the configured local input directory.
+    Discover, register and validate all supported local
+    audio files.
+
+    Registration and validation are retry-safe.
     """
 
     if root_directory is None:
@@ -56,9 +61,15 @@ def ingest_local_audio_directory(
         )
 
         audio_file_id = register_audio_file(
-            source_system=source_file.source_system,
-            source_uri=source_file.source_uri,
-            source_version=source_file.source_version,
+            source_system=(
+                source_file.source_system
+            ),
+            source_uri=(
+                source_file.source_uri
+            ),
+            source_version=(
+                source_file.source_version
+            ),
             original_file_name=(
                 source_file.original_file_name
             ),
@@ -71,7 +82,14 @@ def ingest_local_audio_directory(
             file_extension=(
                 source_file.file_extension
             ),
-            mime_type=source_file.mime_type,
+            mime_type=(
+                source_file.mime_type
+            ),
+        )
+
+        validate_local_audio_file(
+            audio_file_id=audio_file_id,
+            file_path=file_path,
         )
 
         audio_file_ids.append(
@@ -79,7 +97,7 @@ def ingest_local_audio_directory(
         )
 
         LOGGER.info(
-            "Registered source audio. "
+            "Completed local ingestion. "
             "audio_file_id=%s source_uri=%s",
             audio_file_id,
             source_file.source_uri,

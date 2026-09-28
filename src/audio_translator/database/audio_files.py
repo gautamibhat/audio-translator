@@ -286,7 +286,7 @@ def register_audio_file(
     finally:
         cursor.close()
         connection.close()
-        
+
 
 def transition_audio_file_status(
     audio_file_id: int,
@@ -409,3 +409,133 @@ def transition_audio_file_status(
     finally:
         cursor.close()
         connection.close()
+
+
+def mark_audio_file_validated(
+    audio_file_id: int,
+    duration_ms: int,
+    sample_rate_hz: int,
+    channel_count: int,
+    codec: str,
+    message: str | None = None,
+) -> None:
+    """
+    Persist validated audio metadata and transition the
+    audio file to VALIDATED in one transaction.
+
+    Re-running validation for an already VALIDATED file
+    is treated as a no-op.
+    """
+
+    hook = OdbcHook(
+        odbc_conn_id=CONNECTION_ID
+    )
+
+    connection = hook.get_conn()
+    connection.autocommit = False
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT processing_status
+            FROM dbo.audio_file
+                WITH (UPDLOCK, HOLDLOCK)
+            WHERE audio_file_id = ?;
+            """,
+            audio_file_id,
+        )
+
+        row = cursor.fetchone()
+
+        if row is None:
+            raise AudioFileNotFoundError(
+                f"Audio file not found: {audio_file_id}"
+            )
+
+        current_status = AudioProcessingStatus(
+            row[0]
+        )
+
+        if (
+            current_status
+            == AudioProcessingStatus.VALIDATED
+        ):
+            connection.commit()
+
+            LOGGER.info(
+                "Audio file already validated. "
+                "audio_file_id=%s",
+                audio_file_id,
+            )
+
+            return
+
+        validate_transition(
+            current_status=current_status,
+            new_status=AudioProcessingStatus.VALIDATED,
+        )
+
+        cursor.execute(
+            """
+            UPDATE dbo.audio_file
+            SET
+                duration_ms = ?,
+                sample_rate_hz = ?,
+                channel_count = ?,
+                codec = ?,
+                processing_status = 'VALIDATED',
+                updated_at = SYSUTCDATETIME()
+            WHERE audio_file_id = ?;
+            """,
+            duration_ms,
+            sample_rate_hz,
+            channel_count,
+            codec,
+            audio_file_id,
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO dbo.processing_event
+            (
+                audio_file_id,
+                stage,
+                event_type,
+                from_status,
+                to_status,
+                message
+            )
+            VALUES
+            (
+                ?,
+                'INGESTION',
+                'STATUS_CHANGED',
+                ?,
+                'VALIDATED',
+                ?
+            );
+            """,
+            audio_file_id,
+            current_status.value,
+            message,
+        )
+
+        connection.commit()
+
+        LOGGER.info(
+            "Audio file validated. "
+            "audio_file_id=%s",
+            audio_file_id,
+        )
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
