@@ -10,7 +10,7 @@ from audio_translator.ingestion.local_source import (
     inspect_local_audio_file,
 )
 from audio_translator.ingestion.validation import (
-    validate_local_audio_file,
+    validate_audio_file,
 )
 
 
@@ -87,7 +87,7 @@ def ingest_local_audio_directory(
             ),
         )
 
-        validate_local_audio_file(
+        validate_audio_file(
             audio_file_id=audio_file_id,
             file_path=file_path,
         )

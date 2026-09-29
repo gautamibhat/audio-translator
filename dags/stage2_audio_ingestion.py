@@ -1,5 +1,6 @@
 from datetime import timedelta
 import logging
+import os
 
 import pendulum
 
@@ -16,13 +17,16 @@ from audio_translator.database.pipeline_runs import (
 from audio_translator.ingestion.local_ingestion import (
     ingest_local_audio_directory,
 )
+from audio_translator.ingestion.s3_ingestion import (
+    ingest_s3_audio_prefix,
+)
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dag(
-    dag_id="stage2_local_audio_ingestion",
+    dag_id="stage2_audio_ingestion",
     schedule=None,
     start_date=pendulum.datetime(
         2026,
@@ -36,10 +40,10 @@ LOGGER = logging.getLogger(__name__)
         "audio-translator",
         "stage2",
         "ingestion",
-        "local",
+        "audio",
     ],
 )
-def stage2_local_audio_ingestion():
+def stage2_audio_ingestion():
 
     @task(
         retries=2,
@@ -64,19 +68,37 @@ def stage2_local_audio_ingestion():
             "Starting local audio ingestion."
         )
 
-        audio_file_ids = (
-            ingest_local_audio_directory()
-        )
+        source_system = os.environ.get(
+            "AUDIO_INGESTION_SOURCE",
+            "S3",
+        ).upper()
 
-        LOGGER.info(
-            "Local ingestion completed. "
-            "processed_files=%s "
-            "audio_file_ids=%s",
-            len(audio_file_ids),
-            audio_file_ids,
-        )
+        if source_system == "LOCAL":
+            audio_file_ids = ingest_local_audio_directory()
+            LOGGER.info(
+                "Local ingestion completed. "
+                "processed_files=%s "
+                "audio_file_ids=%s",
+                len(audio_file_ids),
+                audio_file_ids,
+            )
+            return audio_file_ids
 
-        return audio_file_ids
+        if source_system == "S3":
+            audio_file_ids = ingest_s3_audio_prefix()
+            LOGGER.info(
+                "S3 ingestion completed. "
+                "processed_files=%s "
+                "audio_file_ids=%s",
+                len(audio_file_ids),
+                audio_file_ids,
+            )
+            return audio_file_ids
+
+        raise ValueError(
+            f"Unsupported AUDIO_INGESTION_SOURCE: {source_system}. "
+            "Expected LOCAL or S3."
+        )
 
     @task(
         retries=2,
@@ -110,4 +132,4 @@ def stage2_local_audio_ingestion():
     start >> audio_file_ids >> complete
 
 
-stage2_local_audio_ingestion()
+stage2_audio_ingestion()

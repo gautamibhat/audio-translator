@@ -82,6 +82,11 @@ x-airflow-common:
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     PYTHONPATH: /opt/airflow/src
     AUDIO_LOCAL_ROOT: ${AUDIO_LOCAL_ROOT:-/opt/airflow/data/audio_data/train}
+    AWS_PROFILE: ${AWS_PROFILE}
+    AWS_REGION: ${AWS_REGION}
+    AUDIO_S3_BUCKET: ${AUDIO_S3_BUCKET}
+    AUDIO_S3_PREFIX: ${AUDIO_S3_PREFIX}
+    AUDIO_INGESTION_SOURCE: ${AUDIO_INGESTION_SOURCE:-S3}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -89,6 +94,8 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow/src
     - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data:ro
+    - ${AIRFLOW_PROJ_DIR:-.}/tests:/opt/airflow/tests:ro
+    - ${HOME}/.aws:/home/airflow/.aws:ro
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on

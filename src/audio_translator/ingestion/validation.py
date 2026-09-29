@@ -18,7 +18,7 @@ from audio_translator.ingestion.audio_probe import (
 LOGGER = logging.getLogger(__name__)
 
 
-def validate_local_audio_file(
+def validate_audio_file(
     audio_file_id: int,
     file_path: Path,
 ) -> None:

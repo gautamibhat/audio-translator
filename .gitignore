@@ -9,7 +9,7 @@ __pycache__/
 .DS_Store
 
 # Do not commit original datasets 
-data/audio_data/
+data/
 sample_code/
 notebooks/
 
